@@ -1,4 +1,4 @@
-# Stage 1: Build the application
+# ---------- Build Stage ----------
 FROM eclipse-temurin:17-jdk AS build
 
 WORKDIR /app
@@ -7,15 +7,15 @@ COPY . .
 
 RUN chmod +x mvnw
 
-# Build and skip tests
+# Skip tests to avoid failure and build the jar
 RUN ./mvnw clean package -DskipTests
 
-# Stage 2: Run the application
+# ---------- Run Stage ----------
 FROM eclipse-temurin:17-jdk
 
 WORKDIR /app
 
-# ✅ Use the actual jar name
+# Copy the built jar file from the build stage
 COPY --from=build /app/target/Banshi-0.0.1-SNAPSHOT.jar app.jar
 
 EXPOSE 8080
