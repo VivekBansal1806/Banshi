@@ -12,16 +12,12 @@ import java.time.LocalDateTime;
 public class Game {
 
     @Id
-    private Long id;
+    private String gameId;
 
     private String name;
-
-    @Enumerated(EnumType.STRING)
-    private GameType gameType;
 
     private LocalDateTime openingTime;
 
     private LocalDateTime closingTime;
 
-    private String result; // nullable — to be set after game is resolved
 }

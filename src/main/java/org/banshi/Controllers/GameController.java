@@ -31,14 +31,13 @@ public class GameController {
 
     // 3. Get game by ID
     @GetMapping("/{id}")
-    public ResponseEntity<GameResponse> getGameById(@PathVariable Long id) {
+    public ResponseEntity<GameResponse> getGameById(@PathVariable String id) {
         return ResponseEntity.ok(gameService.getGameById(id));
     }
-    
 
     // 5. Delete game
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteGame(@PathVariable Long id) {
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteGame(@PathVariable String  id) {
         gameService.deleteGame(id);
         return ResponseEntity.ok("Game deleted successfully");
     }

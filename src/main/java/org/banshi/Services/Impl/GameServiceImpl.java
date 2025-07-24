@@ -1,9 +1,9 @@
-package org.banshi.Services;
+package org.banshi.Services.Impl;
 
 import org.banshi.Dtos.GameRequest;
 import org.banshi.Dtos.GameResponse;
 import org.banshi.Entities.Game;
-import org.banshi.Repository.GameRepo;
+import org.banshi.Repositories.GameRepository;
 import org.banshi.Services.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 public class GameServiceImpl implements GameService {
 
     @Autowired
-    private GameRepo gameRepository;
+    private GameRepository gameRepository;
 
     @Override
     public GameResponse createGame(GameRequest request) {
@@ -24,9 +24,8 @@ public class GameServiceImpl implements GameService {
         }
 
         Game game = Game.builder()
-                .id(request.getId())
+                .gameId(request.getId())
                 .name(request.getName())
-                .gameType(request.getGameType())
                 .openingTime(request.getOpeningTime())
                 .closingTime(request.getClosingTime())
                 .build();
@@ -43,22 +42,14 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
-    public GameResponse getGameById(Long id) {
+    public GameResponse getGameById(String id) {
         Game game = gameRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Game not found with ID: " + id));
         return mapToResponse(game);
     }
 
     @Override
-    public GameResponse updateGameResult(Long id, String result) {
-        Game game = gameRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Game not found with ID: " + id));
-        game.setResult(result);
-        return mapToResponse(gameRepository.save(game));
-    }
-
-    @Override
-    public void deleteGame(Long id) {
+    public void deleteGame(String  id) {
         if (!gameRepository.existsById(id)) {
             throw new RuntimeException("Game not found");
         }
@@ -67,12 +58,10 @@ public class GameServiceImpl implements GameService {
 
     private GameResponse mapToResponse(Game game) {
         return GameResponse.builder()
-                .id(game.getId())
+                .id(game.getGameId())
                 .name(game.getName())
-                .gameType(game.getGameType().toString())
                 .openingTime(game.getOpeningTime())
                 .closingTime(game.getClosingTime())
-                .result(game.getResult())
                 .build();
     }
 }

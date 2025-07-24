@@ -10,7 +10,6 @@ import java.util.List;
 public interface GameService {
     GameResponse createGame(GameRequest game);
     List<GameResponse> getAllGames();
-    GameResponse getGameById(Long id);
-    GameResponse updateGameResult(Long id, String result);
-    void deleteGame(Long id);
+    GameResponse getGameById(String id);
+    void deleteGame(String  id);
 }
