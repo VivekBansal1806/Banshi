@@ -102,9 +102,9 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
+                    <mainClass>org.banshi.BanshiApplication</mainClass> <!-- Replace with your main class path -->
                 </configuration>
             </plugin>
         </plugins>
     </build>
-
 </project>
