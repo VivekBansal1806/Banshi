@@ -77,7 +77,7 @@ public class BidServiceImpl implements BidService {
                 .userId(bid.getUser().getUserId())
                 .gameId(bid.getGame().getGameId())
                 .bidType(bid.getBidType().toString())
-                .bidTiming(bid.getBidTiming().toString()) // NEW FIELD
+                .bidTiming(bid.getBidTiming() != null ? bid.getBidTiming().toString() : null)
                 .number(bid.getNumber())
                 .amount(bid.getAmount())
                 .resultStatus(bid.getResultStatus())

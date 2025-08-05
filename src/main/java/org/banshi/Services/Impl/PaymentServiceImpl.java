@@ -72,7 +72,6 @@ public class PaymentServiceImpl implements PaymentService {
         paymentRepo.save(transaction);
 
         logger.info("Order created successfully: orderId={}, userId={}", order.get("id"), userId);
-
         return new OrderResponse(order.get("id"), amount, "INR");
     }
 
