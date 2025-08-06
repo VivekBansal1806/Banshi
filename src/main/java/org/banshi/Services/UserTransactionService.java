@@ -5,4 +5,6 @@ import org.banshi.Dtos.UserTransactionResponse;
 
 public interface UserTransactionService {
     List<UserTransactionResponse> getTransactionsByUser(Long userId);
+
+    void addBalance(Long userId, Long amount);
 }

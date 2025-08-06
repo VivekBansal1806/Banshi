@@ -54,10 +54,10 @@ public class UserController {
 
     // Update user
     @PutMapping("/{userId}/update")
-    public ResponseEntity<ApiResponse<User>> updateUser(@PathVariable Long userId, @RequestBody UserUpdateRequest request) {
+    public ResponseEntity<ApiResponse<UserResponse>> updateUser(@PathVariable Long userId, @RequestBody UserUpdateRequest request) {
         logger.info("Received update request for userId: {}", userId);
         try {
-            User updatedUser = userService.updateUser(userId, request);
+            UserResponse updatedUser = userService.updateUser(userId, request);
             logger.info("User updated successfully: {}", userId);
             return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "User updated successfully", updatedUser));
         } catch (Exception e) {
@@ -84,10 +84,10 @@ public class UserController {
 
     // Get user by ID
     @GetMapping("/{userId}")
-    public ResponseEntity<ApiResponse<User>> getUserByUserId(@PathVariable Long userId) {
+    public ResponseEntity<ApiResponse<UserResponse>> getUserByUserId(@PathVariable Long userId) {
         logger.info("Fetching user by userId: {}", userId);
         try {
-            User user = userService.getUserByUserId(userId);
+            UserResponse user = userService.getUserByUserId(userId);
             logger.info("User fetched successfully: {}", userId);
             return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "User fetched successfully", user));
         } catch (Exception e) {
@@ -99,10 +99,10 @@ public class UserController {
 
     // Get user by phone
     @GetMapping("/phone/{phone}")
-    public ResponseEntity<ApiResponse<User>> getUserByPhone(@PathVariable String phone) {
+    public ResponseEntity<ApiResponse<UserResponse>> getUserByPhone(@PathVariable String phone) {
         logger.info("Fetching user by phone: {}", phone);
         try {
-            User user = userService.getUserByPhone(phone);
+            UserResponse user = userService.getUserByPhone(phone);
             logger.info("User fetched successfully by phone: {}", phone);
             return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "User fetched successfully", user));
         } catch (Exception e) {
@@ -114,10 +114,10 @@ public class UserController {
 
     // Get user by email
     @GetMapping("/email/{email}")
-    public ResponseEntity<ApiResponse<User>> getUserByEmail(@PathVariable String email) {
+    public ResponseEntity<ApiResponse<UserResponse>> getUserByEmail(@PathVariable String email) {
         logger.info("Fetching user by email: {}", email);
         try {
-            User user = userService.getUserByEmail(email);
+            UserResponse user = userService.getUserByEmail(email);
             logger.info("User fetched successfully by email: {}", email);
             return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "User fetched successfully", user));
         } catch (Exception e) {
@@ -129,10 +129,10 @@ public class UserController {
 
     // Get all users
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<User>>> getAllUsers() {
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
         logger.info("Fetching all users");
         try {
-            List<User> users = userService.getAllUsers();
+            List<UserResponse> users = userService.getAllUsers();
             if (users.isEmpty()) {
                 logger.warn("No users found");
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -161,4 +161,20 @@ public class UserController {
                     .body(new ApiResponse<>("ERROR", e.getMessage(), null));
         }
     }
+
+    // Delete user by ID
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<ApiResponse<String>> deleteUser(@PathVariable Long userId) {
+        logger.info("Received request to delete user with ID: {}", userId);
+        try {
+            userService.deleteUser(userId);
+            logger.info("User deleted successfully: {}", userId);
+            return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "User deleted successfully", null));
+        } catch (Exception e) {
+            logger.error("Error deleting user {}: {}", userId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>("ERROR", e.getMessage(), null));
+        }
+    }
+
 }

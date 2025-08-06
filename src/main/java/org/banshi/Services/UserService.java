@@ -1,7 +1,6 @@
 package org.banshi.Services;
 
 import org.banshi.Dtos.*;
-import org.banshi.Entities.User;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,17 +12,20 @@ public interface UserService {
 
     SignInResponse signIn(SignInRequest signInRequest);
 
-    User updateUser(Long userId, UserUpdateRequest request);
+    UserResponse updateUser(Long userId, UserUpdateRequest request);
 
     void changePassword(Long userId, ChangePasswordRequest request);
 
-    User getUserByPhone(String phone);
+    UserResponse getUserByPhone(String phone);
 
-    User getUserByEmail(String email);
+    UserResponse getUserByEmail(String email);
 
-    User getUserByUserId(Long userId);
+    UserResponse getUserByUserId(Long userId);
 
-    List<User> getAllUsers();
+    List<UserResponse> getAllUsers();
 
     double getUserBalance(Long userId);
+
+    void deleteUser(Long userId);
+
 }

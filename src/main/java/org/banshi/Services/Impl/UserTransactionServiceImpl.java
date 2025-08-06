@@ -35,5 +35,10 @@ public class UserTransactionServiceImpl implements UserTransactionService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public void addBalance(Long userId, Long amount) {
+
+    }
+
 }
 

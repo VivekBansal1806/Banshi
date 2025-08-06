@@ -90,7 +90,7 @@ public class GameServiceImpl implements GameService {
         String closeResult = request.getCloseResult();
 
         String jodi = "" + openResult.chars().map(Character::getNumericValue).sum() % 10 + closeResult.chars().map(Character::getNumericValue).sum() % 10;
-        game.setOpenResult(openResult);   // "45"
+        game.setOpenResult(openResult);   // "456"
         game.setCloseResult(closeResult);  // "678"
 
         game.setGameResult(openResult + "-" + jodi + "-" + closeResult);
@@ -204,11 +204,11 @@ public class GameServiceImpl implements GameService {
 
     private double calculateReward(BidType bidType, double amount) {
         return switch (bidType) {
-            case SINGLE_DIGIT -> amount * 9.0;
-            case JODI_DIGIT -> amount * 90.0;
-            case SINGLE_PANNA -> amount * 140.0;
-            case DOUBLE_PANNA -> amount * 280.0;
-            case TRIPLE_PANNA -> amount * 600.0;
+            case SINGLE_DIGIT -> amount * 10.0;
+            case JODI_DIGIT -> amount * 100.0;
+            case SINGLE_PANNA -> amount * 160.0;
+            case DOUBLE_PANNA -> amount * 320.0;
+            case TRIPLE_PANNA -> amount * 700.0;
             case HALF_SANGAM -> amount * 1000.0;
             case FULL_SANGAM -> amount * 10000.0;
             default -> amount; // fallback

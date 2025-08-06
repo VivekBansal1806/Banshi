@@ -3,6 +3,7 @@ package org.banshi.Entities;
 import jakarta.persistence.*;
 import lombok.*;
 import org.banshi.Entities.Enums.PaymentStatus;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -12,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class PaymentTransaction {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,7 +27,10 @@ public class PaymentTransaction {
     @Enumerated(EnumType.STRING)
     private PaymentStatus status;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @ToString.Exclude // prevents recursive logging
+    @EqualsAndHashCode.Exclude
     private User user;
 
     private LocalDateTime createdAt;
