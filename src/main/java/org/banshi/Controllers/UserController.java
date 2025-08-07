@@ -1,7 +1,6 @@
 package org.banshi.Controllers;
 
 import org.banshi.Dtos.*;
-import org.banshi.Entities.User;
 import org.banshi.Services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,16 +132,11 @@ public class UserController {
         logger.info("Fetching all users");
         try {
             List<UserResponse> users = userService.getAllUsers();
-            if (users.isEmpty()) {
-                logger.warn("No users found");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>("ERROR", "No users found", null));
-            }
             logger.info("Fetched {} users", users.size());
             return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "Users fetched successfully", users));
         } catch (Exception e) {
             logger.error("Error fetching users: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>("ERROR", e.getMessage(), null));
         }
     }

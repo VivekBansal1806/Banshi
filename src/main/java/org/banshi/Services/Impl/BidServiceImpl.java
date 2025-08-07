@@ -6,15 +6,15 @@ import org.banshi.Entities.Bid;
 import org.banshi.Entities.Enums.BidResultStatus;
 import org.banshi.Entities.Enums.BidType;
 import org.banshi.Entities.Enums.TransactionType;
+import org.banshi.Entities.FundHistory;
 import org.banshi.Entities.Game;
 import org.banshi.Entities.User;
-import org.banshi.Entities.UserTransaction;
 import org.banshi.Exceptions.InsufficientBalanceException;
 import org.banshi.Exceptions.ResourceNotFoundException;
 import org.banshi.Repositories.BidRepository;
+import org.banshi.Repositories.FundHistoryRepository;
 import org.banshi.Repositories.GameRepository;
 import org.banshi.Repositories.UserRepository;
-import org.banshi.Repositories.UserTransactionRepository;
 import org.banshi.Services.BidService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,12 +30,15 @@ public class BidServiceImpl implements BidService {
 
     @Autowired
     private BidRepository bidRepository;
+
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private GameRepository gameRepository;
+
     @Autowired
-    private UserTransactionRepository transactionRepository;
+    private FundHistoryRepository fundHistoryRepository;
 
     @Override
     public List<BidResponse> getBidsByUser(Long userId) {
@@ -60,17 +63,6 @@ public class BidServiceImpl implements BidService {
         return mapToResponse(bid);
     }
 
-    @Override
-    public List<BidResponse> getAllBids() {
-
-        List<Bid> bids = bidRepository.findAll();
-        if (bids.isEmpty()) {
-            throw new ResourceNotFoundException("No bids found");
-        }
-
-        return bids.stream().map(this::mapToResponse).collect(Collectors.toList());
-    }
-
     private BidResponse mapToResponse(Bid bid) {
         return BidResponse.builder()
                 .bidId(bid.getBidId())
@@ -81,6 +73,7 @@ public class BidServiceImpl implements BidService {
                 .number(bid.getNumber())
                 .amount(bid.getAmount())
                 .resultStatus(bid.getResultStatus())
+                .payout(bid.getPayout())
                 .placedAt(bid.getPlacedAt())
                 .build();
     }
@@ -88,31 +81,33 @@ public class BidServiceImpl implements BidService {
     @Override
     public BidResponse placeBid(BidRequest request) {
 
-        // Ensure valid bidTiming if needed
         if (requiresTiming(request.getBidType()) && request.getBidTiming() == null) {
             throw new IllegalArgumentException("BidTiming is required for " + request.getBidType());
         }
 
-        // Validate number format for type
         validateBidNumber(request.getBidType(), request.getNumber());
 
-        // Fetch user and game
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Game game = gameRepository.findById(request.getGameId())
                 .orElseThrow(() -> new ResourceNotFoundException("Game not found"));
 
-        // ✅ Check user balance
+        // 🔒 Block if result already declared
+        if (game.getOpenResult() != null || game.getCloseResult() != null) {
+            throw new IllegalStateException("Bidding is closed. Game result has already been declared.");
+        }
+
+        // ✅ Check balance
         if (user.getBalance() < request.getAmount()) {
             throw new InsufficientBalanceException("Insufficient balance. Your wallet has ₹" + user.getBalance());
         }
 
-        // ✅ Deduct amount from wallet
+        // ✅ Deduct balance
         user.setBalance(user.getBalance() - request.getAmount());
-        userRepository.save(user); // Save updated balance
+        userRepository.save(user);
 
-        // ✅ Place the bid
+        // ✅ Save bid (acts as BidHistory)
         Bid bid = Bid.builder()
                 .user(user)
                 .game(game)
@@ -124,21 +119,23 @@ public class BidServiceImpl implements BidService {
                 .build();
         Bid savedBid = bidRepository.save(bid);
 
-        // save transaction
-        UserTransaction txn = UserTransaction.builder()
+        // ✅ Create FundHistory record
+        FundHistory fundHistory = FundHistory.builder()
                 .user(user)
-                .amount(request.getAmount())
-                .type(TransactionType.DEBIT)
-                .description("Bid placed on game: " + game.getName())
-                .timestamp(LocalDateTime.now())
+                .amount(-request.getAmount()) // negative for debit
+                .transactionType(TransactionType.BET_PLACED)
+                .reference("BID-" + savedBid.getBidId())
+                .razorpaySignature(null)
+                .razorpayOrderId(null)
+                .razorpayPaymentId(null)
+                .transactionTime(LocalDateTime.now())
                 .build();
-        transactionRepository.save(txn);
+        fundHistoryRepository.save(fundHistory);
 
         return mapToResponse(savedBid);
     }
 
     private boolean requiresTiming(BidType type) {
-        // These bid types need OPEN or CLOSE timing
         return type == BidType.SINGLE_DIGIT ||
                 type == BidType.SINGLE_PANNA ||
                 type == BidType.DOUBLE_PANNA ||
@@ -152,46 +149,30 @@ public class BidServiceImpl implements BidService {
                 if (!number.matches("\\d") || Integer.parseInt(number) > 9)
                     throw new IllegalArgumentException("Invalid SINGLE_DIGIT bid");
                 break;
-
             case JODI_DIGIT:
                 if (!number.matches("\\d{2}"))
                     throw new IllegalArgumentException("Invalid JODI_DIGIT bid");
                 break;
-
             case SINGLE_PANNA:
                 if (!number.matches("\\d{3}") || hasRepeatedDigits(number))
                     throw new IllegalArgumentException("Invalid SINGLE_PANNA bid");
                 break;
-
             case DOUBLE_PANNA:
                 if (!number.matches("\\d{3}") || !hasExactlyOnePair(number))
                     throw new IllegalArgumentException("Invalid DOUBLE_PANNA bid");
                 break;
-
             case TRIPLE_PANNA:
                 if (!number.matches("(\\d)\\1\\1"))
                     throw new IllegalArgumentException("Invalid TRIPLE_PANNA bid");
                 break;
-
             case HALF_SANGAM:
                 if (!number.matches("\\d{1}-\\d{3}") && !number.matches("\\d{3}-\\d{1}"))
                     throw new IllegalArgumentException("Invalid HALF_SANGAM format. Use '4-123' or '123-4'");
-
-                String[] parts = number.split("-");
-                if (parts.length != 2)
-                    throw new IllegalArgumentException("HALF_SANGAM must be in 'digit-panna' or 'panna-digit' format");
-
-                String part1 = parts[0], part2 = parts[1];
-                if ((part1.length() == 1 && !part2.matches("\\d{3}")) ||
-                        (part1.length() == 3 && !part2.matches("\\d")))
-                    throw new IllegalArgumentException("Invalid HALF_SANGAM digit-panna combination.");
                 break;
-
             case FULL_SANGAM:
                 if (!number.matches("\\d{3}-\\d{3}"))
                     throw new IllegalArgumentException("Invalid FULL_SANGAM format. Expected format: '123-456'");
                 break;
-
             default:
                 throw new IllegalArgumentException("Unsupported BidType");
         }
@@ -207,5 +188,4 @@ public class BidServiceImpl implements BidService {
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
         return freq.containsValue(2L) && freq.size() == 2;
     }
-
 }

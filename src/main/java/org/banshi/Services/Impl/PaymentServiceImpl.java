@@ -3,12 +3,14 @@ package org.banshi.Services.Impl;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
-import org.banshi.Dtos.OrderResponse;
+import lombok.RequiredArgsConstructor;
+import org.banshi.Dtos.PaymentRequest;
+import org.banshi.Dtos.PaymentResponse;
 import org.banshi.Dtos.VerifyPaymentRequest;
-import org.banshi.Entities.Enums.PaymentStatus;
-import org.banshi.Entities.PaymentTransaction;
+import org.banshi.Entities.Enums.TransactionType;
+import org.banshi.Entities.FundHistory;
 import org.banshi.Entities.User;
-import org.banshi.Repositories.PaymentTransactionRepository;
+import org.banshi.Repositories.FundHistoryRepository;
 import org.banshi.Repositories.UserRepository;
 import org.banshi.Services.PaymentService;
 import org.json.JSONObject;
@@ -23,88 +25,88 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 
 @Service
+@RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
     private static final Logger logger = LoggerFactory.getLogger(PaymentServiceImpl.class);
 
+    @Value("${razorpay.key_secret}")
+    private String keySecret;
     private final RazorpayClient razorpayClient;
-    private final PaymentTransactionRepository paymentRepo;
     private final UserRepository userRepo;
-    private final String secret;
+    private final FundHistoryRepository fundHistoryRepository;
 
-    public PaymentServiceImpl(RazorpayClient razorpayClient,
-                              PaymentTransactionRepository paymentRepo,
-                              UserRepository userRepo,
-                              @Value("${razorpay.key_secret}") String secret) {
-        this.razorpayClient = razorpayClient;
-        this.paymentRepo = paymentRepo;
-        this.userRepo = userRepo;
-        this.secret = secret;
-        logger.info("PaymentService initialized successfully");
-    }
+    @Override
+    public PaymentResponse createOrder(PaymentRequest request) throws RazorpayException {
+        logger.info("Creating Razorpay order for userId={}, amount={}", request.getUserId(), request.getAmount());
 
-    public OrderResponse createOrder(Long userId, Double amount) throws RazorpayException {
-        logger.info("Creating Razorpay order for userId={}, amount={}", userId, amount);
+        User user = userRepo.findById(request.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getUserId()));
 
-        User user = userRepo.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found with ID: " + userId));
-
-        if (amount == null || amount <= 0) {
+        if (request.getAmount() == null || request.getAmount() <= 0) {
             throw new IllegalArgumentException("Amount must be greater than zero.");
         }
 
         JSONObject options = new JSONObject();
-        options.put("amount", amount * 100); // paise
+        options.put("amount", request.getAmount() * 100); // in paise
         options.put("currency", "INR");
         options.put("payment_capture", 1);
 
         Order order = razorpayClient.orders.create(options);
 
-        PaymentTransaction transaction = PaymentTransaction.builder()
-                .user(user)
-                .razorpayOrderId(order.get("id"))
-                .amount(amount)
-                .status(PaymentStatus.PENDING)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
-        paymentRepo.save(transaction);
-
-        logger.info("Order created successfully: orderId={}, userId={}", order.get("id"), userId);
-        return new OrderResponse(order.get("id"), amount, "INR");
+        logger.info("Order created successfully: orderId={}, userId={}", order.get("id"), request.getUserId());
+        return new PaymentResponse(order.get("id"), request.getAmount(), "INR");
     }
 
-    public boolean verifyPayment(VerifyPaymentRequest request) throws Exception {
-        logger.info("Verifying payment for orderId={}, paymentId={}", request.getRazorpayOrderId(), request.getRazorpayPaymentId());
+    @Override
+    public boolean verifyPayment(VerifyPaymentRequest request) {
+        logger.info("Verifying Razorpay payment: {}", request);
 
-        String data = request.getRazorpayOrderId() + "|" + request.getRazorpayPaymentId();
-        String expectedSignature = hmacSHA256(data, secret);
-
-        PaymentTransaction transaction = paymentRepo.findByRazorpayOrderId(request.getRazorpayOrderId())
-                .orElseThrow(() -> new RuntimeException("Transaction not found"));
-
-        if (expectedSignature.equals(request.getRazorpaySignature())) {
-            transaction.setRazorpayPaymentId(request.getRazorpayPaymentId());
-            transaction.setRazorpaySignature(request.getRazorpaySignature());
-            transaction.setStatus(PaymentStatus.SUCCESS);
-            transaction.setUpdatedAt(LocalDateTime.now());
-            paymentRepo.save(transaction);
-
-            User user = transaction.getUser();
-            user.setBalance(user.getBalance() + transaction.getAmount());
-            userRepo.save(user);
-
-            logger.info("Payment verified successfully: orderId={}, paymentId={}", request.getRazorpayOrderId(), request.getRazorpayPaymentId());
+        // Check for duplicate payment
+        boolean alreadyExists = fundHistoryRepository.existsByRazorpayPaymentId(request.getRazorpayPaymentId());
+        if (alreadyExists) {
+            logger.warn("Payment already verified: {}", request.getRazorpayPaymentId());
             return true;
         }
 
-        transaction.setStatus(PaymentStatus.FAILED);
-        transaction.setUpdatedAt(LocalDateTime.now());
-        paymentRepo.save(transaction);
+        try {
+            // Validate Razorpay signature
+            String data = request.getRazorpayOrderId() + "|" + request.getRazorpayPaymentId();
+            String generatedSignature = hmacSHA256(data, keySecret);
 
-        logger.warn("Payment verification failed: orderId={}, paymentId={}", request.getRazorpayOrderId(), request.getRazorpayPaymentId());
-        return false;
+            if (!generatedSignature.equals(request.getRazorpaySignature())) {
+                logger.warn("Invalid Razorpay signature for paymentId={}", request.getRazorpayPaymentId());
+                return false;
+            }
+
+            // Fetch user
+            User user = userRepo.findById(request.getUserId())
+                    .orElseThrow(() -> new RuntimeException("User not found with ID: " + request.getUserId()));
+
+            // Save FundHistory
+            FundHistory history = FundHistory.builder()
+                    .user(user)
+                    .amount(request.getAmount())
+                    .transactionType(TransactionType.RECHARGE)
+                    .reference("Razorpay")
+                    .razorpayOrderId(request.getRazorpayOrderId())
+                    .razorpayPaymentId(request.getRazorpayPaymentId())
+                    .razorpaySignature(request.getRazorpaySignature())
+                    .transactionTime(LocalDateTime.now())
+                    .build();
+            fundHistoryRepository.save(history);
+
+            // Update wallet
+            user.setBalance(user.getBalance() + request.getAmount());
+            userRepo.save(user);
+
+            logger.info("Payment verified and wallet credited successfully for userId={}", user.getUserId());
+            return true;
+
+        } catch (Exception ex) {
+            logger.error("Error while verifying payment", ex);
+            return false;
+        }
     }
 
     private String hmacSHA256(String data, String key) throws Exception {

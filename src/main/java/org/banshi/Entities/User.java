@@ -29,6 +29,11 @@ public class User {
 
     private Double balance;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<PaymentTransaction> transactions;
+    // ✅ Bidding History (One user -> Many bids)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Bid> bidHistory;
+
+    // ✅ Transaction (Fund) History (One user -> Many fund history entries)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<FundHistory> fundHistory;
 }

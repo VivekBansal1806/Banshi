@@ -8,18 +8,19 @@ import org.banshi.Entities.Enums.BidResultStatus;
 import org.banshi.Entities.Enums.BidTiming;
 import org.banshi.Entities.Enums.BidType;
 import org.banshi.Entities.Enums.TransactionType;
+import org.banshi.Entities.FundHistory;
 import org.banshi.Entities.Game;
 import org.banshi.Entities.User;
-import org.banshi.Entities.UserTransaction;
 import org.banshi.Exceptions.ResourceNotFoundException;
 import org.banshi.Repositories.BidRepository;
+import org.banshi.Repositories.FundHistoryRepository;
 import org.banshi.Repositories.GameRepository;
 import org.banshi.Repositories.UserRepository;
-import org.banshi.Repositories.UserTransactionRepository;
 import org.banshi.Services.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,7 +34,7 @@ public class GameServiceImpl implements GameService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private UserTransactionRepository userTransactionRepository;
+    private FundHistoryRepository fundHistoryRepository;
 
     @Override
     public GameResponse createGame(GameRequest request) {
@@ -45,18 +46,15 @@ public class GameServiceImpl implements GameService {
                 .openResult(null)
                 .closeResult(null)
                 .build();
-
         return mapToResponse(gameRepository.save(game));
     }
 
     @Override
     public List<GameResponse> getAllGames() {
         List<Game> games = gameRepository.findAll();
-
         if (games.isEmpty()) {
             throw new ResourceNotFoundException("No games found");
         }
-
         return games.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -82,31 +80,22 @@ public class GameServiceImpl implements GameService {
         Game game = gameRepository.findById(request.getGameId())
                 .orElseThrow(() -> new ResourceNotFoundException("Game not found with ID: " + request.getGameId()));
 
-        if(game.getGameResult()!= null) {
+        if (game.getGameResult() != null) {
             throw new IllegalStateException("Game result already declared");
         }
 
         String openResult = request.getOpenResult();
         String closeResult = request.getCloseResult();
 
-        String jodi = "" + openResult.chars().map(Character::getNumericValue).sum() % 10 + closeResult.chars().map(Character::getNumericValue).sum() % 10;
-        game.setOpenResult(openResult);   // "456"
-        game.setCloseResult(closeResult);  // "678"
+        String jodi = "" +
+                openResult.chars().map(Character::getNumericValue).sum() % 10 +
+                closeResult.chars().map(Character::getNumericValue).sum() % 10;
 
+        game.setOpenResult(openResult);
+        game.setCloseResult(closeResult);
         game.setGameResult(openResult + "-" + jodi + "-" + closeResult);
-        Game updatedGame = gameRepository.save(game);
-        return mapToResponse(updatedGame);
-    }
 
-    private GameResponse mapToResponse(Game game) {
-        return GameResponse.builder()
-                .gameId(game.getGameId())
-                .name(game.getName())
-                .openingTime(game.getOpeningTime())
-                .closingTime(game.getClosingTime())
-                .openResult(game.getOpenResult())
-                .closeResult(game.getCloseResult())
-                .build();
+        return mapToResponse(gameRepository.save(game));
     }
 
     @Override
@@ -114,14 +103,11 @@ public class GameServiceImpl implements GameService {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new ResourceNotFoundException("Game not found"));
 
-        String openResult = game.getOpenResult();
-        String closeResult = game.getCloseResult();
-        String result = game.getGameResult();
-
-        if (openResult == null || closeResult == null) {
+        if (game.getOpenResult() == null || game.getCloseResult() == null) {
             throw new IllegalArgumentException("Game results are not declared yet.");
         }
 
+        String result = game.getGameResult();
         String openDigit = String.valueOf(result.charAt(4));
         String closeDigit = String.valueOf(result.charAt(5));
         String jodi = openDigit + closeDigit;
@@ -130,66 +116,33 @@ public class GameServiceImpl implements GameService {
 
         for (Bid bid : bids) {
             try {
-                // Skip already evaluated
+                // Skip already evaluated bids
                 if (bid.getResultStatus() != BidResultStatus.PENDING) continue;
 
-                String bidNum = bid.getNumber();
-                boolean won = false;
-
-                switch (bid.getBidType()) {
-                    case SINGLE_DIGIT:
-                        if (bid.getBidTiming() == BidTiming.OPEN && bidNum.equals(openDigit)) won = true;
-                        else if (bid.getBidTiming() == BidTiming.CLOSE && bidNum.equals(closeDigit)) won = true;
-                        break;
-
-                    case JODI_DIGIT:
-                        if (bidNum.equals(jodi)) won = true;
-                        break;
-
-                    case SINGLE_PANNA:
-                    case DOUBLE_PANNA:
-                    case TRIPLE_PANNA:
-                        if (bid.getBidTiming() == BidTiming.OPEN && bidNum.equals(openResult)) won = true;
-                        else if (bid.getBidTiming() == BidTiming.CLOSE && bidNum.equals(closeResult)) won = true;
-                        break;
-
-                    case HALF_SANGAM:
-                        String[] half = bidNum.split("-");
-                        if (half.length == 2) {
-                            if ((half[0].equals(openDigit) && half[1].equals(closeResult)) ||
-                                    (half[0].equals(closeDigit) && half[1].equals(openResult))) {
-                                won = true;
-                            }
-                        }
-                        break;
-
-                    case FULL_SANGAM:
-                        String[] full = bidNum.split("-");
-                        if (full.length == 2 && full[0].equals(openResult) && full[1].equals(closeResult)) {
-                            won = true;
-                        }
-                        break;
-                }
+                boolean won = checkIfWon(bid, game, openDigit, closeDigit, jodi);
 
                 if (won) {
                     bid.setResultStatus(BidResultStatus.WON);
                     double reward = calculateReward(bid.getBidType(), bid.getAmount());
+                    bid.setPayout(reward);
 
                     User user = bid.getUser();
-                    user.setBalance(user.getBalance() + reward); // ✅ Update balance
-                    userRepository.save(user);
+                    user.setBalance(user.getBalance() + reward);
 
-                    // ✅ Log credit transaction
-                    UserTransaction txn = UserTransaction.builder()
+                    // ✅ Create FundHistory record for winning
+                    FundHistory fundHistory = FundHistory.builder()
                             .user(user)
-                            .amount(reward)
-                            .type(TransactionType.CREDIT)
-                            .description("Bid WON (Type: " + bid.getBidType() + ")")
+                            .amount(reward) // credit
+                            .transactionType(TransactionType.WINNING)
+                            .reference("BID-" + bid.getBidId()) // reference: bid ID
+                            .transactionTime(LocalDateTime.now())
                             .build();
 
-                    userTransactionRepository.save(txn);
+                    fundHistoryRepository.save(fundHistory);
+                    userRepository.save(user);
                 } else {
                     bid.setResultStatus(BidResultStatus.LOST);
+                    bid.setPayout(0.0); // Optional
                 }
 
                 bidRepository.save(bid);
@@ -202,6 +155,31 @@ public class GameServiceImpl implements GameService {
         return "Result evaluated successfully for game ID: " + gameId;
     }
 
+
+    private boolean checkIfWon(Bid bid, Game game, String openDigit, String closeDigit, String jodi) {
+        String bidNum = bid.getNumber();
+        return switch (bid.getBidType()) {
+            case SINGLE_DIGIT -> (bid.getBidTiming() == BidTiming.OPEN && bidNum.equals(openDigit)) ||
+                    (bid.getBidTiming() == BidTiming.CLOSE && bidNum.equals(closeDigit));
+            case JODI_DIGIT -> bidNum.equals(jodi);
+            case SINGLE_PANNA, DOUBLE_PANNA, TRIPLE_PANNA ->
+                    (bid.getBidTiming() == BidTiming.OPEN && bidNum.equals(game.getOpenResult())) ||
+                            (bid.getBidTiming() == BidTiming.CLOSE && bidNum.equals(game.getCloseResult()));
+            case HALF_SANGAM -> {
+                String[] half = bidNum.split("-");
+                yield half.length == 2 &&
+                        ((half[0].equals(openDigit) && half[1].equals(game.getCloseResult())) ||
+                                (half[0].equals(closeDigit) && half[1].equals(game.getOpenResult())));
+            }
+            case FULL_SANGAM -> {
+                String[] full = bidNum.split("-");
+                yield full.length == 2 &&
+                        full[0].equals(game.getOpenResult()) &&
+                        full[1].equals(game.getCloseResult());
+            }
+        };
+    }
+
     private double calculateReward(BidType bidType, double amount) {
         return switch (bidType) {
             case SINGLE_DIGIT -> amount * 10.0;
@@ -211,8 +189,17 @@ public class GameServiceImpl implements GameService {
             case TRIPLE_PANNA -> amount * 700.0;
             case HALF_SANGAM -> amount * 1000.0;
             case FULL_SANGAM -> amount * 10000.0;
-            default -> amount; // fallback
         };
     }
 
+    private GameResponse mapToResponse(Game game) {
+        return GameResponse.builder()
+                .gameId(game.getGameId())
+                .name(game.getName())
+                .openingTime(game.getOpeningTime())
+                .closingTime(game.getClosingTime())
+                .openResult(game.getOpenResult())
+                .closeResult(game.getCloseResult())
+                .build();
+    }
 }

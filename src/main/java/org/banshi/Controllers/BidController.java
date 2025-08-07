@@ -1,8 +1,9 @@
 package org.banshi.Controllers;
 
-import org.banshi.Dtos.*;
+import org.banshi.Dtos.ApiResponse;
+import org.banshi.Dtos.BidRequest;
+import org.banshi.Dtos.BidResponse;
 import org.banshi.Services.BidService;
-import org.banshi.Services.GameService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +21,6 @@ public class BidController {
 
     @Autowired
     private BidService bidService;
-
-    @Autowired
-    private GameService gameService;
 
     // 1. Place a bid
     @PostMapping("/place")
@@ -43,31 +41,31 @@ public class BidController {
         }
     }
 
-    // 2. Get all bids by user
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<ApiResponse<List<BidResponse>>> getBidsByUser(@PathVariable Long userId) {
-        logger.info("Fetching all bids for userId={}", userId);
+    // 2. Get bidding history by user
+    @GetMapping("/history/user/{userId}")
+    public ResponseEntity<ApiResponse<List<BidResponse>>> getUserBidHistory(@PathVariable Long userId) {
+        logger.info("Fetching bid history for userId={}", userId);
         try {
             List<BidResponse> response = bidService.getBidsByUser(userId);
-            logger.info("Fetched {} bids for userId={}", response.size(), userId);
-            return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "User's bids fetched", response));
+            logger.info("Fetched {} bids (history) for userId={}", response.size(), userId);
+            return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "User's bid history fetched", response));
         } catch (Exception e) {
-            logger.warn("No bids found for userId={}: {}", userId, e.getMessage());
+            logger.warn("No bid history found for userId={}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>("ERROR", e.getMessage(), null));
         }
     }
 
-    // 3. Get all bids by game
-    @GetMapping("/game/{gameId}")
-    public ResponseEntity<ApiResponse<List<BidResponse>>> getBidsByGame(@PathVariable Long gameId) {
-        logger.info("Fetching all bids for gameId={}", gameId);
+    // 3. Get bidding history by game
+    @GetMapping("/history/game/{gameId}")
+    public ResponseEntity<ApiResponse<List<BidResponse>>> getGameBidHistory(@PathVariable Long gameId) {
+        logger.info("Fetching bid history for gameId={}", gameId);
         try {
             List<BidResponse> response = bidService.getBidsByGame(gameId);
-            logger.info("Fetched {} bids for gameId={}", response.size(), gameId);
-            return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "Game's bids fetched", response));
+            logger.info("Fetched {} bids (history) for gameId={}", response.size(), gameId);
+            return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "Game's bid history fetched", response));
         } catch (Exception e) {
-            logger.warn("No bids found for gameId={}: {}", gameId, e.getMessage());
+            logger.warn("No bid history found for gameId={}: {}", gameId, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>("ERROR", e.getMessage(), null));
         }
@@ -83,21 +81,6 @@ public class BidController {
             return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "Bid found", response));
         } catch (Exception e) {
             logger.warn("Bid not found for bidId={}: {}", bidId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("ERROR", e.getMessage(), null));
-        }
-    }
-
-    // 5. Get all bids
-    @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<BidResponse>>> getAllBids() {
-        logger.info("Fetching all bids");
-        try {
-            List<BidResponse> response = bidService.getAllBids();
-            logger.info("Fetched {} total bids", response.size());
-            return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "All bids fetched", response));
-        } catch (Exception e) {
-            logger.error("Error fetching all bids: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>("ERROR", e.getMessage(), null));
         }

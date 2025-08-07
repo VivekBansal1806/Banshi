@@ -1,14 +1,18 @@
 package org.banshi.Controllers;
 
 import org.banshi.Dtos.ApiResponse;
-import org.banshi.Dtos.OrderResponse;
+import org.banshi.Dtos.PaymentRequest;
+import org.banshi.Dtos.PaymentResponse;
 import org.banshi.Dtos.VerifyPaymentRequest;
 import org.banshi.Services.PaymentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -22,13 +26,13 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
-    @PostMapping("/create-order/{userId}")
-    public ResponseEntity<ApiResponse<OrderResponse>> createOrder(@PathVariable Long userId, @RequestParam Double amount) {
+    @PostMapping("/create-order")
+    public ResponseEntity<ApiResponse<PaymentResponse>> createOrder(@RequestBody PaymentRequest request) {
         try {
-            OrderResponse order = paymentService.createOrder(userId, amount);
+            PaymentResponse order = paymentService.createOrder(request);
             return ResponseEntity.ok(new ApiResponse<>("success", "Order created successfully", order));
         } catch (Exception e) {
-            logger.error("Error creating order for userId={}", userId, e);
+            logger.error("Error creating order for userId={}", request.getUserId(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new ApiResponse<>("error", e.getMessage(), null));
         }

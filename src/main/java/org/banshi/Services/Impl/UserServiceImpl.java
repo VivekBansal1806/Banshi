@@ -3,7 +3,6 @@ package org.banshi.Services.Impl;
 import lombok.RequiredArgsConstructor;
 import org.banshi.Dtos.*;
 import org.banshi.Entities.Enums.Role;
-import org.banshi.Entities.PaymentTransaction;
 import org.banshi.Entities.User;
 import org.banshi.Repositories.UserRepository;
 import org.banshi.Services.UserService;
@@ -126,23 +125,8 @@ public class UserServiceImpl implements UserService {
                 .email(user.getEmail())
                 .role(user.getRole().name())
                 .balance(user.getBalance())
-                .transactions(user.getTransactions() != null ? user.getTransactions()
-                        .stream()
-                        .map(this::mapToTransactionResponse)
-                        .collect(Collectors.toList()) : null)
                 .build();
     }
 
-    private PaymentTransactionResponse mapToTransactionResponse(PaymentTransaction tx) {
-        return PaymentTransactionResponse
-                .builder()
-                .id(tx.getId()).razorpayOrderId(tx.getRazorpayOrderId())
-                .razorpayPaymentId(tx.getRazorpayPaymentId())
-                .razorpaySignature(tx.getRazorpaySignature())
-                .amount(tx.getAmount())
-                .status(tx.getStatus().name())
-                .createdAt(tx.getCreatedAt() != null ? tx.getCreatedAt().toString() : null)
-                .updatedAt(tx.getUpdatedAt() != null ? tx.getUpdatedAt().toString() : null)
-                .build();
-    }
+
 }

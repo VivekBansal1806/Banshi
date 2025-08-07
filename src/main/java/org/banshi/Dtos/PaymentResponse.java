@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class OrderResponse {
+public class PaymentResponse {
     private String orderId;
     private Double amount;
     private String currency;

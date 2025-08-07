@@ -29,17 +29,19 @@ public class Bid {
     private Game game;
 
     @Enumerated(EnumType.STRING)
-    private BidType bidType; // E.g., SINGLE_DIGIT, JODI, etc.
+    private BidType bidType; // SINGLE_DIGIT, JODI, etc.
 
     @Enumerated(EnumType.STRING)
-    private BidTiming bidTiming; // NEW FIELD: OPEN or CLOSE
+    private BidTiming bidTiming; // OPEN or CLOSE
 
-    private String number;  // Could be 1-digit, 2-digit, 3-digit
+    private String number;
 
     private Double amount;
 
     @Enumerated(EnumType.STRING)
-    private BidResultStatus resultStatus;
+    private BidResultStatus resultStatus; // WIN, LOSE, PENDING
+
+    private Double payout = 0.0; // amount won, default 0
 
     @CreationTimestamp
     private LocalDateTime placedAt;

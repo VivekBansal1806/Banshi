@@ -1,6 +1,5 @@
 package org.banshi.Entities.Enums;
 
 public enum TransactionType {
-    CREDIT,
-    DEBIT
+    RECHARGE, WITHDRAW, BET_PLACED, WINNING, REFUND
 }

@@ -49,7 +49,7 @@ public class GameController {
             return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "All games fetched successfully", games));
         } catch (Exception e) {
             logger.error("Error fetching all games: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new ApiResponse<>("ERROR", e.getMessage(), null));
         }
     }

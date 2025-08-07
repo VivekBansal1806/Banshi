@@ -21,5 +21,6 @@ public class BidResponse {
     private String number;
     private BidResultStatus resultStatus;
     private Double amount;
+    private Double payout;
     private LocalDateTime placedAt;
 }
