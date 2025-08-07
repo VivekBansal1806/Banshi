@@ -44,14 +44,20 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Incorrect password.");
         }
 
-        return SignInResponse.builder().userId(user.getUserId()).name(user.getName()).phone(user.getPhone()).email(user.getEmail()).build();
+        return SignInResponse.builder()
+                .userId(user.getUserId())
+                .name(user.getName())
+                .phone(user.getPhone())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .build();
     }
 
     @Override
     public UserResponse updateUser(Long userId, UserUpdateRequest request) {
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
-        user.setName(request.getName());
+        user.setName(request.getName().trim());
         User updatedUser = userRepository.save(user);
         return mapToUserResponse(updatedUser);
     }
@@ -60,11 +66,11 @@ public class UserServiceImpl implements UserService {
     public void changePassword(Long userId, ChangePasswordRequest request) {
         User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
-        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword().trim())) {
             throw new IllegalArgumentException("Old password does not match.");
         }
 
-        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()).trim());
         userRepository.save(user);
     }
 
