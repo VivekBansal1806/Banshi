@@ -4,6 +4,7 @@ import org.banshi.Dtos.BidRequest;
 import org.banshi.Dtos.BidResponse;
 import org.banshi.Entities.Bid;
 import org.banshi.Entities.Enums.BidResultStatus;
+import org.banshi.Entities.Enums.BidTiming;
 import org.banshi.Entities.Enums.BidType;
 import org.banshi.Entities.Enums.TransactionType;
 import org.banshi.Entities.FundHistory;
@@ -81,6 +82,7 @@ public class BidServiceImpl implements BidService {
     @Override
     public BidResponse placeBid(BidRequest request) {
 
+
         if (requiresTiming(request.getBidType()) && request.getBidTiming() == null) {
             throw new IllegalArgumentException("BidTiming is required for " + request.getBidType());
         }
@@ -101,6 +103,25 @@ public class BidServiceImpl implements BidService {
         // ✅ Check balance
         if (user.getBalance() < request.getAmount()) {
             throw new InsufficientBalanceException("Insufficient balance. Your wallet has ₹" + user.getBalance());
+        }
+
+        // ✅ Bidding time check
+        LocalDateTime now = LocalDateTime.now();
+
+        if (requiresTiming(request.getBidType())) {
+            if (request.getBidTiming() == BidTiming.OPEN) {
+                if (now.isAfter(game.getOpeningTime())) {
+                    throw new IllegalStateException("Bidding for OPEN is closed. Game opened at: " + game.getOpeningTime());
+                }
+            } else if (request.getBidTiming() == BidTiming.CLOSE) {
+                if (now.isAfter(game.getClosingTime())) {
+                    throw new IllegalStateException("Bidding for CLOSE is closed. Game closed at: " + game.getClosingTime());
+                }
+            }
+        } else {
+            if (now.isAfter(game.getClosingTime())) {
+                throw new IllegalStateException("Bidding is closed. Game closed at: " + game.getClosingTime());
+            }
         }
 
         // ✅ Deduct balance
