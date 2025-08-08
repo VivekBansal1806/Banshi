@@ -22,8 +22,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -175,15 +173,15 @@ public class BidServiceImpl implements BidService {
                     throw new IllegalArgumentException("Invalid JODI_DIGIT bid");
                 break;
             case SINGLE_PANNA:
-                if (!number.matches("\\d{3}") || hasRepeatedDigits(number))
+                if (!number.matches("\\d{3}"))
                     throw new IllegalArgumentException("Invalid SINGLE_PANNA bid");
                 break;
             case DOUBLE_PANNA:
-                if (!number.matches("\\d{3}") || !hasExactlyOnePair(number))
+                if (!number.matches("\\d{3}"))
                     throw new IllegalArgumentException("Invalid DOUBLE_PANNA bid");
                 break;
             case TRIPLE_PANNA:
-                if (!number.matches("(\\d)\\1\\1"))
+                if (!number.matches("(\\d{3})"))
                     throw new IllegalArgumentException("Invalid TRIPLE_PANNA bid");
                 break;
             case HALF_SANGAM:
@@ -199,14 +197,14 @@ public class BidServiceImpl implements BidService {
         }
     }
 
-    private boolean hasRepeatedDigits(String number) {
-        return number.chars().distinct().count() < number.length();
-    }
+//    private boolean hasRepeatedDigits(String number) {
+//        return number.chars().distinct().count() < number.length();
+//    }
 
-    private boolean hasExactlyOnePair(String number) {
-        Map<Character, Long> freq = number.chars()
-                .mapToObj(c -> (char) c)
-                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-        return freq.containsValue(2L) && freq.size() == 2;
-    }
+//    private boolean hasExactlyOnePair(String number) {
+//        Map<Character, Long> freq = number.chars()
+//                .mapToObj(c -> (char) c)
+//                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+//        return freq.containsValue(2L) && freq.size() == 2;
+//    }
 }
