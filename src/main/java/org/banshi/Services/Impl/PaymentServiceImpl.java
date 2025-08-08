@@ -57,7 +57,7 @@ public class PaymentServiceImpl implements PaymentService {
         return new PaymentResponse(order.get("id"), request.getAmount(), "INR");
     }
 
-    public boolean verifySignature(VerifyPaymentRequest request) {
+    private boolean verifySignature(VerifyPaymentRequest request) {
         try {
             JSONObject options = new JSONObject();
             options.put("razorpay_order_id", request.getRazorpayOrderId());
@@ -84,13 +84,13 @@ public class PaymentServiceImpl implements PaymentService {
         boolean alreadyExists = fundHistoryRepository.existsByRazorpayPaymentId(request.getRazorpayPaymentId());
         if (alreadyExists) {
             logger.warn("Duplicate payment attempt detected for paymentId={}", request.getRazorpayPaymentId());
-            return false;
+            throw new RuntimeException("Duplicate payment attempt detected");
         }
 
         // Step 2: Verify Razorpay signature
         boolean isSignatureValid = verifySignature(request);
         if (!isSignatureValid) {
-            return false;
+            throw new RuntimeException("Invalid Razorpay signature");
         }
 
         // Step 3: Fetch user

@@ -42,7 +42,7 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<Boolean>> verifyPayment(@RequestBody VerifyPaymentRequest request) {
         try {
             boolean verified = paymentService.verifyPayment(request);
-            return ResponseEntity.ok(new ApiResponse<>("success", verified ? "Payment verified" : "Payment failed", verified));
+            return ResponseEntity.status(HttpStatus.ACCEPTED).body(new ApiResponse<>("success", "Payment verified", verified));
         } catch (Exception e) {
             logger.error("Error verifying payment", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
