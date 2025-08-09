@@ -14,6 +14,5 @@ public class SignUpResponse {
     private Long userId;
     private String name;
     private String phone;
-    private String email;
 
 }

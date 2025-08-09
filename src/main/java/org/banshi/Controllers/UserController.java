@@ -22,14 +22,14 @@ public class UserController {
     // SignUp
     @PostMapping("/signUp")
     public ResponseEntity<ApiResponse<SignUpResponse>> signUp(@RequestBody SignUpRequest signUpRequest) {
-        logger.info("Received sign-up request for email: {}", signUpRequest.getEmail());
+        logger.info("Received sign-up request : {}", signUpRequest);
         try {
             SignUpResponse response = userService.signUp(signUpRequest);
             logger.info("User signed up successfully: {}", response);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(new ApiResponse<>("SUCCESS", "Sign Up Successfully", response));
         } catch (Exception e) {
-            logger.error("Error during sign-up for email {}: {}", signUpRequest.getEmail(), e.getMessage(), e);
+            logger.error("Error during sign-up for phone {}: {}", signUpRequest.getPhone(), e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>("ERROR", e.getMessage(), null));
         }
@@ -109,22 +109,6 @@ public class UserController {
                     .body(new ApiResponse<>("ERROR", e.getMessage(), null));
         }
     }
-
-    // Get user by email
-    @GetMapping("/email/{email}")
-    public ResponseEntity<ApiResponse<UserResponse>> getUserByEmail(@PathVariable String email) {
-        logger.info("Fetching user by email: {}", email);
-        try {
-            UserResponse user = userService.getUserByEmail(email);
-            logger.info("User fetched successfully by email: {}", email);
-            return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "User fetched successfully", user));
-        } catch (Exception e) {
-            logger.warn("User not found with email {}: {}", email, e.getMessage());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("ERROR", e.getMessage(), null));
-        }
-    }
-
 
     // Get user balance
     @GetMapping("/{userId}/balance")

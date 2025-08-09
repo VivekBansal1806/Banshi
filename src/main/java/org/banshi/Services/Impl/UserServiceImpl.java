@@ -25,15 +25,11 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Phone number already registered.");
         }
 
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException("Email is already registered.");
-        }
-
-        User user = User.builder().name(request.getName()).phone(request.getPhone()).email(request.getEmail()).password(passwordEncoder.encode(request.getPassword())).balance(0.0).role(Role.ROLE_USER).build();
+        User user = User.builder().name(request.getName()).phone(request.getPhone()).password(passwordEncoder.encode(request.getPassword())).balance(0.0).role(Role.ROLE_USER).build();
 
         user = userRepository.save(user);
 
-        return SignUpResponse.builder().userId(user.getUserId()).name(user.getName()).phone(user.getPhone()).email(user.getEmail()).build();
+        return SignUpResponse.builder().userId(user.getUserId()).name(user.getName()).phone(user.getPhone()).build();
     }
 
     @Override
@@ -48,7 +44,6 @@ public class UserServiceImpl implements UserService {
                 .userId(user.getUserId())
                 .name(user.getName())
                 .phone(user.getPhone())
-                .email(user.getEmail())
                 .role(user.getRole().name())
                 .build();
     }
@@ -87,12 +82,6 @@ public class UserServiceImpl implements UserService {
         return mapToUserResponse(user);
     }
 
-    @Override
-    public UserResponse getUserByEmail(String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found with email: " + email));
-
-        return mapToUserResponse(user);
-    }
 
     @Override
     public List<UserResponse> getAllUsers() {
@@ -128,7 +117,6 @@ public class UserServiceImpl implements UserService {
                 .userId(user.getUserId())
                 .name(user.getName())
                 .phone(user.getPhone())
-                .email(user.getEmail())
                 .role(user.getRole().name())
                 .balance(user.getBalance())
                 .build();

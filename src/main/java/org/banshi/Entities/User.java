@@ -22,7 +22,6 @@ public class User {
     private Long userId;
     private String name;
     private String phone;
-    private String email;
     private String password;
 
     @Enumerated(EnumType.STRING)

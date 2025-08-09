@@ -18,8 +18,6 @@ public interface UserService {
 
     UserResponse getUserByPhone(String phone);
 
-    UserResponse getUserByEmail(String email);
-
     UserResponse getUserByUserId(Long userId);
 
     List<UserResponse> getAllUsers();
