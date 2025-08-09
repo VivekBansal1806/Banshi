@@ -5,6 +5,7 @@ import org.banshi.Dtos.PaymentRequest;
 import org.banshi.Dtos.PaymentResponse;
 import org.banshi.Dtos.VerifyPaymentRequest;
 import org.banshi.Services.PaymentService;
+import org.banshi.Services.WithdrawalService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -22,7 +23,7 @@ public class PaymentController {
 
     private final PaymentService paymentService;
 
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentService paymentService, WithdrawalService withdrawalService) {
         this.paymentService = paymentService;
     }
 
@@ -33,8 +34,7 @@ public class PaymentController {
             return ResponseEntity.ok(new ApiResponse<>("success", "Order created successfully", order));
         } catch (Exception e) {
             logger.error("Error creating order for userId={}", request.getUserId(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new ApiResponse<>("error", e.getMessage(), null));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ApiResponse<>("error", e.getMessage(), null));
         }
     }
 
@@ -45,8 +45,8 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(new ApiResponse<>("success", "Payment verified", verified));
         } catch (Exception e) {
             logger.error("Error verifying payment", e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(new ApiResponse<>("error", e.getMessage(), false));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiResponse<>("error", e.getMessage(), false));
         }
     }
+
 }

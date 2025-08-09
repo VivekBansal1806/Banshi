@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.banshi.Dtos.PaymentRequest;
 import org.banshi.Dtos.PaymentResponse;
 import org.banshi.Dtos.VerifyPaymentRequest;
+import org.banshi.Dtos.WithdrawalRequest;
 import org.banshi.Entities.Enums.TransactionType;
 import org.banshi.Entities.FundHistory;
 import org.banshi.Entities.User;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -119,4 +121,5 @@ public class PaymentServiceImpl implements PaymentService {
 
         return true;
     }
+
 }

@@ -123,7 +123,7 @@ public class GameServiceImpl implements GameService {
 
                 if (won) {
                     bid.setResultStatus(BidResultStatus.WON);
-                    double reward = calculateReward(bid.getBidType(), bid.getAmount());
+                    Double reward = calculateReward(bid.getBidType(), bid.getAmount());
                     bid.setPayout(reward);
 
                     User user = bid.getUser();
