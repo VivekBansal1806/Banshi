@@ -69,9 +69,13 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public void deleteGame(Long id) {
-        if (!gameRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Cannot delete — game not found with ID: " + id);
+        Game game = gameRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Game not found with id: " + id));
+
+        if (game.getOpenResult() == null || game.getCloseResult() == null) {
+            throw new IllegalStateException("Cannot delete game without declared result.");
         }
+
         gameRepository.deleteById(id);
     }
 

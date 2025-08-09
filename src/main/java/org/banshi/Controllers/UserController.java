@@ -9,10 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
-@RequestMapping("/api/user/")
+@RequestMapping("/api/user")
 public class UserController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
@@ -126,20 +125,6 @@ public class UserController {
         }
     }
 
-    // Get all users
-    @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
-        logger.info("Fetching all users");
-        try {
-            List<UserResponse> users = userService.getAllUsers();
-            logger.info("Fetched {} users", users.size());
-            return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "Users fetched successfully", users));
-        } catch (Exception e) {
-            logger.error("Error fetching users: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("ERROR", e.getMessage(), null));
-        }
-    }
 
     // Get user balance
     @GetMapping("/{userId}/balance")
@@ -152,21 +137,6 @@ public class UserController {
         } catch (Exception e) {
             logger.warn("Failed to fetch balance for userId {}: {}", userId, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(new ApiResponse<>("ERROR", e.getMessage(), null));
-        }
-    }
-
-    // Delete user by ID
-    @DeleteMapping("/{userId}")
-    public ResponseEntity<ApiResponse<String>> deleteUser(@PathVariable Long userId) {
-        logger.info("Received request to delete user with ID: {}", userId);
-        try {
-            userService.deleteUser(userId);
-            logger.info("User deleted successfully: {}", userId);
-            return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "User deleted successfully", null));
-        } catch (Exception e) {
-            logger.error("Error deleting user {}: {}", userId, e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new ApiResponse<>("ERROR", e.getMessage(), null));
         }
     }

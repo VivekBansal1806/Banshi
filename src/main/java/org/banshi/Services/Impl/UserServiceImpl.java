@@ -29,7 +29,7 @@ public class UserServiceImpl implements UserService {
             throw new IllegalArgumentException("Email is already registered.");
         }
 
-        User user = User.builder().name(request.getName()).phone(request.getPhone()).email(request.getEmail()).password(passwordEncoder.encode(request.getPassword())).balance(0.0).role(Role.USER).build();
+        User user = User.builder().name(request.getName()).phone(request.getPhone()).email(request.getEmail()).password(passwordEncoder.encode(request.getPassword())).balance(0.0).role(Role.ROLE_USER).build();
 
         user = userRepository.save(user);
 

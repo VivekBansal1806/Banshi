@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.banshi.Entities.Enums.Role;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -36,4 +37,8 @@ public class User {
     // ✅ Transaction (Fund) History (One user -> Many fund history entries)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FundHistory> fundHistory;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Withdrawal> withdrawals;
+
 }

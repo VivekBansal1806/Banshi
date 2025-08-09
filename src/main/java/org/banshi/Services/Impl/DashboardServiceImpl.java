@@ -43,7 +43,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .totalDeposits(totalDeposits)
                 .totalWithdrawals(totalWithdrawals)
                 .pendingWithdrawalAmount(pendingWithdrawalAmount)
-                .totalPlacedBid(totalPlacedBid)
+                .totalPlacedBid(totalPlacedBid == 0 ? totalPlacedBid : -1 * totalPlacedBid)
                 .totalUsers(totalUsers)
                 .totalBidsCount(totalBidsCount)
                 .activeBidsCount(activeBidsCount)
