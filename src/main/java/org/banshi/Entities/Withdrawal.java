@@ -26,7 +26,7 @@ public class Withdrawal {
     private User user;
 
     @Column(nullable = false)
-    private double amount;
+    private Double amount;
 
     @Column(nullable = false)
     private String upiId;
