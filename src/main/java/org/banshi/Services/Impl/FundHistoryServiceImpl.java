@@ -25,7 +25,7 @@ public class FundHistoryServiceImpl implements FundHistoryService {
 
         return history.stream()
                 .map(this::mapToFhd)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()).reversed();
     }
 
     @Override

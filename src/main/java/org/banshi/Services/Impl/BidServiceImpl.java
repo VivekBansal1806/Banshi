@@ -44,7 +44,7 @@ public class BidServiceImpl implements BidService {
         return bidRepository.findByUserUserId(userId)
                 .stream()
                 .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()).reversed();
     }
 
     @Override
