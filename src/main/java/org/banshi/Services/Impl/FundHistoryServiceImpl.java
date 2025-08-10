@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,12 +21,17 @@ public class FundHistoryServiceImpl implements FundHistoryService {
 
     @Override
     public List<FundHistoryDto> getFundHistoryByUser(Long userId) {
+
         List<FundHistory> history = fundHistoryRepository.findByUserUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("No fund history found for userId=" + userId));
 
-        return history.stream()
+
+        List<FundHistoryDto> dto= history.stream()
                 .map(this::mapToFhd)
-                .collect(Collectors.toList()).reversed();
+                .collect(Collectors.toList());
+
+        Collections.reverse(dto);
+        return dto;
     }
 
     @Override

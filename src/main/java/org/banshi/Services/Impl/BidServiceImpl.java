@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,10 +42,17 @@ public class BidServiceImpl implements BidService {
 
     @Override
     public List<BidResponse> getBidsByUser(Long userId) {
-        return bidRepository.findByUserUserId(userId)
+
+        List<Bid> history = bidRepository.findByUserUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("No Bid history found for userId=" + userId));
+
+        List<BidResponse> dtos = history
                 .stream()
                 .map(this::mapToResponse)
-                .collect(Collectors.toList()).reversed();
+                .collect(Collectors.toList());
+
+        Collections.reverse(dtos);
+        return dtos;
     }
 
     @Override
