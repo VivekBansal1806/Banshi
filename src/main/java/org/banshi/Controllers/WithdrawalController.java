@@ -26,20 +26,15 @@ public class WithdrawalController {
 
     @PostMapping("/withdraw")
     public ResponseEntity<ApiResponse<String>> requestWithdraw(@RequestBody WithdrawalRequest dto) {
-        logger.info("Withdrawal request received | UserId: {} | Amount: {} | UPI: {}",
-                dto.getUserId(), dto.getAmount(), dto.getUpiId());
+        logger.info("Withdrawal request received | UserId: {} | Amount: {} | UPI: {}", dto.getUserId(), dto.getAmount(), dto.getUpiId());
 
         try {
             String resultMessage = withdrawalService.requestWithdrawal(dto);
             logger.info("Withdrawal request processed successfully | UserId: {}", dto.getUserId());
             return ResponseEntity.ok(new ApiResponse<>("success", resultMessage, null));
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             logger.warn("Invalid withdrawal request | UserId: {} | Reason: {}", dto.getUserId(), e.getMessage());
             return ResponseEntity.badRequest().body(new ApiResponse<>("error", e.getMessage(), null));
-        } catch (Exception e) {
-            logger.error("Withdrawal request failed | UserId: {} | Reason: {}", dto.getUserId(), e.getMessage(), e);
-            return ResponseEntity.internalServerError()
-                    .body(new ApiResponse<>("error", "Unexpected error occurred", null));
         }
     }
 
@@ -51,8 +46,7 @@ public class WithdrawalController {
             return ResponseEntity.ok(new ApiResponse<>("success", "User withdrawals fetched", dtos));
         } catch (Exception e) {
             logger.error("Error fetching withdrawals for UserId: {} | Reason: {}", userId, e.getMessage(), e);
-            return ResponseEntity.internalServerError()
-                    .body(new ApiResponse<>("error", "Could not fetch user withdrawals", null));
+            return ResponseEntity.internalServerError().body(new ApiResponse<>("error", "Could not fetch user withdrawals", null));
         }
     }
 
@@ -64,8 +58,7 @@ public class WithdrawalController {
             return ResponseEntity.ok(new ApiResponse<>("success", "Withdrawal details fetched", dto));
         } catch (Exception e) {
             logger.error("Error fetching withdrawal details | WithdrawalId: {} | Reason: {}", withdrawalId, e.getMessage(), e);
-            return ResponseEntity.internalServerError()
-                    .body(new ApiResponse<>("error", "Could not fetch withdrawal details", null));
+            return ResponseEntity.internalServerError().body(new ApiResponse<>("error", "Could not fetch withdrawal details", null));
         }
     }
 

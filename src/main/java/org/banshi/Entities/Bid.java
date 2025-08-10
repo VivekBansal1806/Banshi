@@ -1,7 +1,10 @@
 package org.banshi.Entities;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.banshi.Entities.Enums.BidResultStatus;
 import org.banshi.Entities.Enums.BidTiming;
 import org.banshi.Entities.Enums.BidType;
@@ -25,8 +28,7 @@ public class Bid {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "game_id", nullable = true)
-    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.SET_NULL)
+    @JoinColumn(name = "game_id")
     private Game game;
 
     @Enumerated(EnumType.STRING)
