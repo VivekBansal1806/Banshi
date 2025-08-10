@@ -25,7 +25,8 @@ public class Bid {
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "game_id", nullable = false)
+    @JoinColumn(name = "game_id", nullable = true)
+    @org.hibernate.annotations.OnDelete(action = org.hibernate.annotations.OnDeleteAction.SET_NULL)
     private Game game;
 
     @Enumerated(EnumType.STRING)
