@@ -11,6 +11,7 @@ import java.util.List;
 public interface GameService {
     GameResponse createGame(GameRequest game);
     List<GameResponse> getAllGames();
+    List<GameResponse> getAllGamesUser();
     GameResponse getGameById(Long id);
     void deleteGame(Long  id);
     GameResponse declareGameResult(DeclareResultRequest request);

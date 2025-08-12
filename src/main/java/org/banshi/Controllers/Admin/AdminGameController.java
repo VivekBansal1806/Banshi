@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/admin/games")
 @PreAuthorize("hasRole('ADMIN')")
@@ -21,6 +23,21 @@ public class AdminGameController {
 
     @Autowired
     private GameService gameService;
+
+    // 2. Get all games
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<GameResponse>>> getAllGamesAdmin() {
+        logger.info("Fetching all games");
+        try {
+            List<GameResponse> games = gameService.getAllGames();
+            logger.info("Fetched {} games", games.size());
+            return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "All games fetched successfully", games));
+        } catch (Exception e) {
+            logger.error("Error fetching all games: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>("ERROR", e.getMessage(), null));
+        }
+    }
 
     // 1. Create Game (Admin)
     @PostMapping("/create")

@@ -16,6 +16,7 @@ public class BidResponse {
     private Long bidId;
     private Long userId;
     private Long gameId;
+    private String gameName;
     private String bidType;
     private String bidTiming;
     private String number;

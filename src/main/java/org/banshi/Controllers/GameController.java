@@ -26,12 +26,12 @@ public class GameController {
     @Autowired
     private GameService gameService;
 
-    // 2. Get all games
+    // 2. Get all games for users
     @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<GameResponse>>> getAllGames() {
+    public ResponseEntity<ApiResponse<List<GameResponse>>> getAllGamesUser() {
         logger.info("Fetching all games");
         try {
-            List<GameResponse> games = gameService.getAllGames();
+            List<GameResponse> games = gameService.getAllGamesUser();
             logger.info("Fetched {} games", games.size());
             return ResponseEntity.ok(new ApiResponse<>("SUCCESS", "All games fetched successfully", games));
         } catch (Exception e) {

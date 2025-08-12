@@ -2,8 +2,10 @@ package org.banshi.Services.Impl;
 
 import org.banshi.Dtos.FundHistoryDto;
 import org.banshi.Entities.FundHistory;
+import org.banshi.Entities.User;
 import org.banshi.Exceptions.ResourceNotFoundException;
 import org.banshi.Repositories.FundHistoryRepository;
+import org.banshi.Repositories.UserRepository;
 import org.banshi.Services.FundHistoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,14 +21,18 @@ public class FundHistoryServiceImpl implements FundHistoryService {
     @Autowired
     private FundHistoryRepository fundHistoryRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Override
     public List<FundHistoryDto> getFundHistoryByUser(Long userId) {
+
+        User user = userRepository.findById(userId).orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
 
         List<FundHistory> history = fundHistoryRepository.findByUserUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("No fund history found for userId=" + userId));
 
-
-        List<FundHistoryDto> dto= history.stream()
+        List<FundHistoryDto> dto = history.stream()
                 .map(this::mapToFhd)
                 .collect(Collectors.toList());
 

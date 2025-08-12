@@ -61,6 +61,20 @@ public class GameServiceImpl implements GameService {
     }
 
     @Override
+    public List<GameResponse> getAllGamesUser() {
+        List<Game> games = gameRepository.findAllTodayGames();
+
+        if (games.isEmpty()) {
+            throw new ResourceNotFoundException("No games found for today");
+        }
+
+        return games.stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+
+    @Override
     public GameResponse getGameById(Long id) {
         Game game = gameRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Game not found with ID: " + id));
