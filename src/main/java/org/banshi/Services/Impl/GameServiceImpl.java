@@ -20,6 +20,7 @@ import org.banshi.Services.GameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -62,13 +63,28 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public List<GameResponse> getAllGamesUser() {
-        List<Game> games = gameRepository.findAllTodayGames();
+        LocalDate today = LocalDate.now();
 
-        if (games.isEmpty()) {
+        // Fetch all games
+        List<Game> allGames = gameRepository.findAll();
+
+        if (allGames.isEmpty()) {
+            throw new ResourceNotFoundException("No games found");
+        }
+
+        // Filter for today's games that are currently open
+        List<Game> todayGames = allGames.stream()
+                .filter(game -> {
+                    LocalDate openingDate = game.getOpeningTime().toLocalDate();
+                    return openingDate.isEqual(today);      // Closing time > now
+                })
+                .toList();
+
+        if (todayGames.isEmpty()) {
             throw new ResourceNotFoundException("No games found for today");
         }
 
-        return games.stream()
+        return todayGames.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
