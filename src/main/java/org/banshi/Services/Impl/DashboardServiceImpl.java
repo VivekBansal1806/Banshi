@@ -1,12 +1,13 @@
 package org.banshi.Services.Impl;
 
 import org.banshi.Dtos.DashboardResponse;
-import org.banshi.Repositories.BidRepository;
-import org.banshi.Repositories.FundHistoryRepository;
-import org.banshi.Repositories.UserRepository;
-import org.banshi.Repositories.WithdrawalRepository;
+import org.banshi.Dtos.GameResponse;
+import org.banshi.Repositories.*;
 import org.banshi.Services.DashboardService;
+import org.banshi.Services.GameService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class DashboardServiceImpl implements DashboardService {
@@ -15,12 +16,17 @@ public class DashboardServiceImpl implements DashboardService {
     private final WithdrawalRepository withdrawalRepo;
     private final UserRepository userRepo;
     private final BidRepository bidRepo;
+    private final GameRepository gameRepository;
+    private final GameService gameService;
 
-    public DashboardServiceImpl(FundHistoryRepository fundHistoryRepo, WithdrawalRepository withdrawalRepo, UserRepository userRepo, BidRepository bidRepo) {
+    public DashboardServiceImpl(FundHistoryRepository fundHistoryRepo, WithdrawalRepository withdrawalRepo, UserRepository userRepo, BidRepository bidRepo, GameRepository gameRepository, GameService gameService) {
         this.fundHistoryRepo = fundHistoryRepo;
         this.withdrawalRepo = withdrawalRepo;
+
         this.userRepo = userRepo;
         this.bidRepo = bidRepo;
+        this.gameRepository = gameRepository;
+        this.gameService = gameService;
     }
 
     @Override
@@ -31,6 +37,8 @@ public class DashboardServiceImpl implements DashboardService {
         Double totalPlacedBid = fundHistoryRepo.getTotalPlacedBidAmount();
 
         Long totalUsers = userRepo.count();
+        List<GameResponse> totalGamesList=gameService.getAllGamesUser();
+        Long totalGames = (long) totalGamesList.size();
         Long totalBidsCount = bidRepo.count();
         Long activeBidsCount = bidRepo.countActiveBids();
 
@@ -45,6 +53,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .pendingWithdrawalAmount(pendingWithdrawalAmount)
                 .totalPlacedBid(totalPlacedBid == 0 ? totalPlacedBid : -1 * totalPlacedBid)
                 .totalUsers(totalUsers)
+                .totalGames(totalGames)
                 .totalBidsCount(totalBidsCount)
                 .activeBidsCount(activeBidsCount)
                 .netRevenue(netRevenue)

@@ -16,6 +16,7 @@ public class DashboardResponse {
     private Double totalPlacedBid;
 
     private Long totalUsers;
+    private Long totalGames;
 
     private Long totalBidsCount;
     private Long activeBidsCount;
