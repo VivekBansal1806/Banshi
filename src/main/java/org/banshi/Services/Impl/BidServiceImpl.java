@@ -89,7 +89,6 @@ public class BidServiceImpl implements BidService {
     @Override
     public BidResponse placeBid(BidRequest request) {
 
-
         if (requiresTiming(request.getBidType()) && request.getBidTiming() == null) {
             throw new IllegalArgumentException("BidTiming is required for " + request.getBidType());
         }

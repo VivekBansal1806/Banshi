@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import org.banshi.Entities.Enums.BidResultStatus;
 import org.banshi.Entities.Enums.BidTiming;
 import org.banshi.Entities.Enums.BidType;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -46,6 +45,11 @@ public class Bid {
 
     private Double payout = 0.0; // amount won, default 0
 
-    @CreationTimestamp
-    private LocalDateTime placedAt;
+    @Builder.Default
+    private LocalDateTime placedAt = LocalDateTime.now();
+
+    @PrePersist
+    protected void onCreate() {
+        this.placedAt = LocalDateTime.now();
+    }
 }
