@@ -26,8 +26,8 @@ public class BidController {
     // 1. Place a bid
     @PostMapping("/place")
     public ResponseEntity<ApiResponse<BidResponse>> placeBid(@RequestBody BidRequest request) {
-        logger.info("Received request to place bid: userId={}, gameId={}, amount={}",
-                request.getUserId(), request.getGameId(), request.getAmount());
+        logger.info("Received request to place bid:{}",
+                request);
         try {
             BidResponse response = bidService.placeBid(request);
             logger.info("Bid placed successfully: bidId={}, userId={}, gameId={}",
